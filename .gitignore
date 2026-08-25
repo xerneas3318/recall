@@ -1,0 +1,14 @@
+# secrets and local config, never commit these
+.env
+
+# local working notes
+instructions.md
+
+# runtime data (your chats, uploads, and struggle memory live here)
+data/
+uploads/
+
+# deps and os cruft
+node_modules/
+.DS_Store
+*.log
