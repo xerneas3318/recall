@@ -1,0 +1,117 @@
+// Turning data into DOM: a small Markdown renderer for the tutor's replies,
+// plus the builder for a message bubble and its attachments.
+
+function escapeHtml(s) {
+  return s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+}
+
+// Inline formatting on an already-escaped line: code, bold, italics.
+function inline(s) {
+  s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+  s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>");
+  return s;
+}
+
+const isSpecial = (l) =>
+  /^```/.test(l) || /^#{1,3}\s+/.test(l) || /^\s*[-*]\s+/.test(l) || /^\s*\d+\.\s+/.test(l);
+
+// A deliberately small Markdown-to-HTML pass. Handles the things Claude
+// actually uses in tutoring: headings, lists, fenced code, and emphasis.
+function renderMarkdown(src) {
+  const lines = escapeHtml(src).split("\n");
+  let html = "";
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    if (/^```/.test(line)) {
+      const code = [];
+      i++;
+      while (i < lines.length && !/^```/.test(lines[i])) code.push(lines[i++]);
+      i++; // closing fence
+      html += `<pre><code>${code.join("\n")}</code></pre>`;
+      continue;
+    }
+
+    const heading = line.match(/^(#{1,3})\s+(.*)$/);
+    if (heading) {
+      const lvl = heading[1].length;
+      html += `<h${lvl}>${inline(heading[2])}</h${lvl}>`;
+      i++;
+      continue;
+    }
+
+    if (/^\s*[-*]\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
+        items.push(inline(lines[i++].replace(/^\s*[-*]\s+/, "")));
+      }
+      html += `<ul>${items.map((t) => `<li>${t}</li>`).join("")}</ul>`;
+      continue;
+    }
+
+    if (/^\s*\d+\.\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) {
+        items.push(inline(lines[i++].replace(/^\s*\d+\.\s+/, "")));
+      }
+      html += `<ol>${items.map((t) => `<li>${t}</li>`).join("")}</ol>`;
+      continue;
+    }
+
+    if (line.trim() === "") {
+      i++;
+      continue;
+    }
+
+    const para = [];
+    while (i < lines.length && lines[i].trim() !== "" && !isSpecial(lines[i])) {
+      para.push(lines[i++]);
+    }
+    html += `<p>${para.map(inline).join("<br>")}</p>`;
+  }
+
+  return html;
+}
+
+// One chat bubble. Attachments render as thumbnails (images) or file links.
+function messageEl(msg) {
+  const el = document.createElement("div");
+  el.className = `msg ${msg.role}`;
+  if (msg.id) el.dataset.id = msg.id;
+
+  if (msg.attachments && msg.attachments.length) {
+    const thumbs = document.createElement("div");
+    thumbs.className = "thumbs";
+    for (const a of msg.attachments) {
+      if (a.kind === "image") {
+        const img = document.createElement("img");
+        img.src = a.url;
+        img.alt = a.filename;
+        thumbs.appendChild(img);
+      } else {
+        const link = document.createElement("a");
+        link.className = "file-chip";
+        link.href = a.url;
+        link.target = "_blank";
+        link.textContent = "📄 " + a.filename;
+        thumbs.appendChild(link);
+      }
+    }
+    el.appendChild(thumbs);
+  }
+
+  const body = document.createElement("div");
+  if (msg.role === "assistant") {
+    body.className = "md";
+    body.innerHTML = renderMarkdown(msg.content || "");
+  } else {
+    body.textContent = msg.content || "";
+  }
+  el.appendChild(body);
+  return el;
+}
+
+window.Render = { renderMarkdown, messageEl, escapeHtml };
