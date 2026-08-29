@@ -21,6 +21,7 @@ function systemPrompt(className, memories) {
     "When they ask for help, teach the underlying idea rather than just handing over an answer.",
     "When they ask for a practice worksheet, write one that targets the specific things they get wrong. Include an answer key at the end.",
     "Use Markdown. Be concrete and show your work.",
+    "Write all math as plain text, not LaTeX: no dollar signs, no \\frac, no \\cdot. Use ^ for exponents (x^2), * or plain juxtaposition for multiplication, and / for division.",
   ];
 
   if (memories.length) {
