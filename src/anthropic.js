@@ -14,7 +14,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || "MISSING
 
 // The persona plus the class's accumulated memory of weak spots. This is what
 // makes the tutor feel like it actually remembers you between sessions.
-function systemPrompt(className, memories) {
+function systemPrompt(className, memories, web) {
   const lines = [
     `You are a sharp, patient study tutor helping the student with their ${className} coursework.`,
     "When they paste homework, a worksheet, or a photo of their work, check it carefully, point out exactly what is wrong and why, and show the correct reasoning step by step.",
@@ -23,6 +23,12 @@ function systemPrompt(className, memories) {
     "Use Markdown. Be concrete and show your work.",
     "Write all math as plain text, not LaTeX: no dollar signs, no \\frac, no \\cdot. Use ^ for exponents (x^2), * or plain juxtaposition for multiplication, and / for division.",
   ];
+
+  if (web) {
+    lines.push(
+      "You can search the web and open pages when the student needs current information, a source, or something you are unsure about. Search when it helps, and say what you found.",
+    );
+  }
 
   if (memories.length) {
     lines.push(
@@ -61,22 +67,38 @@ function toApiMessage(message, attachments) {
   return { role: message.role, content: blocks };
 }
 
-// Stream a reply. onText fires for every chunk; the resolved value is the full
-// text so the caller can save it.
-async function streamReply({ className, memories, messages, onText }) {
-  const stream = client.messages.stream({
+// Stream a reply. onText fires for every chunk. Resolves to the full text plus
+// a list of any web searches/fetches the model ran, so the UI can show sources.
+async function streamReply({ className, memories, messages, web, onText }) {
+  const params = {
     model: CHAT_MODEL,
-    max_tokens: 4096,
-    system: systemPrompt(className, memories),
+    max_tokens: web ? 8000 : 4096,
+    system: systemPrompt(className, memories, web),
     messages,
-  });
+  };
+  if (web) {
+    params.tools = [
+      { type: "web_search_20260209", name: "web_search" },
+      { type: "web_fetch_20260209", name: "web_fetch" },
+    ];
+  }
 
+  const stream = client.messages.stream(params);
   stream.on("text", onText);
   const final = await stream.finalMessage();
-  return final.content
+
+  const text = final.content
     .filter((b) => b.type === "text")
     .map((b) => b.text)
     .join("");
+
+  // Whatever the model looked up, so the reply can carry its sources.
+  const searches = final.content
+    .filter((b) => b.type === "server_tool_use")
+    .map((b) => (b.name === "web_fetch" ? b.input.url : b.input.query))
+    .filter(Boolean);
+
+  return { text, searches };
 }
 
 module.exports = { client, systemPrompt, toApiMessage, streamReply };

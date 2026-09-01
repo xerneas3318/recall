@@ -96,6 +96,7 @@ router.post("/chats/:chatId/messages", async (req, res) => {
 
   const content = (req.body.content || "").toString();
   const attachmentIds = Array.isArray(req.body.attachmentIds) ? req.body.attachmentIds : [];
+  const web = Boolean(req.body.web);
   if (!content.trim() && attachmentIds.length === 0) {
     return res.status(400).json({ error: "message is empty" });
   }
@@ -124,15 +125,19 @@ router.post("/chats/:chatId/messages", async (req, res) => {
   res.flushHeaders();
 
   let fullText = "";
+  let searches = [];
   try {
-    fullText = await streamReply({
+    const result = await streamReply({
       className: chat.class_name,
       memories,
       messages: apiMessages,
+      web,
       onText: (delta) => {
         if (!res.writableEnded) sse(res, "delta", { text: delta });
       },
     });
+    fullText = result.text;
+    searches = result.searches;
   } catch (err) {
     sse(res, "error", { message: err.message || "The tutor could not respond." });
     return res.end();
@@ -143,6 +148,7 @@ router.post("/chats/:chatId/messages", async (req, res) => {
   sse(res, "done", {
     assistantMessageId: Number(saved.lastInsertRowid),
     title: chatOwnerStmt.get(chat.id).title,
+    searches,
   });
 
   // Update the struggle memory from this exchange, then tell the client.
