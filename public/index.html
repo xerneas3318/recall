@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -14,7 +14,9 @@
   <div class="app">
     <!-- Classes and chats -->
     <aside class="sidebar">
-      <div class="brand">recall</div>
+      <div class="brand">
+        <span class="brand-mark">◆</span> recall
+      </div>
 
       <section class="pane">
         <div class="pane-head">
@@ -31,6 +33,12 @@
         </div>
         <ul id="chat-list" class="list"></ul>
       </section>
+
+      <div class="sidebar-foot">
+        <button id="theme-toggle" class="foot-btn" title="Toggle theme">
+          <span class="theme-label">Dark</span>
+        </button>
+      </div>
     </aside>
 
     <!-- Conversation -->
@@ -50,11 +58,12 @@
         </div>
         <div id="attachment-chips" class="chips"></div>
         <div class="composer-row">
-          <button id="attach-btn" class="icon-btn" title="Attach image or PDF">+</button>
+          <button id="attach-btn" class="tool-btn" title="Attach image or PDF">Attach</button>
+          <button id="web-toggle" class="tool-btn" title="Let the tutor search the web">Web</button>
           <textarea id="input" rows="1" placeholder="Ask a question, or paste a worksheet..."></textarea>
           <button id="send-btn" class="send-btn">Send</button>
         </div>
-        <input id="file-input" type="file" accept="image/*,application/pdf" multiple hidden />
+        <input id="file-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" multiple hidden />
       </div>
     </main>
 

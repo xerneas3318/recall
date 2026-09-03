@@ -76,11 +76,17 @@ function renderMarkdown(src) {
   return html;
 }
 
-// One chat bubble. Attachments render as thumbnails (images) or file links.
+// One message block. A muted role label sits on top, attachments render as
+// thumbnails or file links, and assistant replies get an empty sources slot.
 function messageEl(msg) {
   const el = document.createElement("div");
   el.className = `msg ${msg.role}`;
   if (msg.id) el.dataset.id = msg.id;
+
+  const role = document.createElement("div");
+  role.className = "msg-role";
+  role.textContent = msg.role === "assistant" ? "Tutor" : "You";
+  el.appendChild(role);
 
   if (msg.attachments && msg.attachments.length) {
     const thumbs = document.createElement("div");
@@ -108,10 +114,24 @@ function messageEl(msg) {
     body.className = "md";
     body.innerHTML = renderMarkdown(msg.content || "");
   } else {
+    body.className = "text";
     body.textContent = msg.content || "";
   }
   el.appendChild(body);
+
+  if (msg.role === "assistant") {
+    const sources = document.createElement("div");
+    sources.className = "sources";
+    el.appendChild(sources);
+  }
   return el;
 }
 
-window.Render = { renderMarkdown, messageEl, escapeHtml };
+// Show what the tutor looked up, under its reply.
+function renderSources(el, searches) {
+  const box = el.querySelector(".sources");
+  if (!box || !searches || !searches.length) return;
+  box.innerHTML = `<b>🌐 Looked up:</b> ${searches.map(escapeHtml).join(" · ")}`;
+}
+
+window.Render = { renderMarkdown, messageEl, renderSources, escapeHtml };

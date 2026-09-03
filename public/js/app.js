@@ -22,6 +22,8 @@
     memoryInput: el("memory-input"),
     memoryHint: el("memory-hint"),
     keyWarning: el("key-warning"),
+    themeToggle: el("theme-toggle"),
+    webToggle: el("web-toggle"),
   };
 
   const state = {
@@ -29,6 +31,7 @@
     chatId: null,
     staged: [], // uploaded-but-unsent attachments
     sending: false,
+    web: false, // whether the tutor may search the web
   };
 
   const LAST_CLASS = "recall.classId";
@@ -273,15 +276,16 @@
 
     await API.sendMessage(
       state.chatId,
-      { content, attachmentIds },
+      { content, attachmentIds, web: state.web },
       {
         onDelta: (text) => {
           acc += text;
           body.innerHTML = Render.renderMarkdown(acc);
           scrollDown();
         },
-        onDone: () => {
+        onDone: (data) => {
           bubble.classList.remove("streaming");
+          Render.renderSources(bubble, data && data.searches);
           loadChats(); // the first message may have renamed the chat
         },
         onMemory: (data) => {
@@ -317,6 +321,28 @@
     els.input.style.height = Math.min(els.input.scrollHeight, 200) + "px";
   }
 
+  const THEME_KEY = "recall.theme";
+
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem(THEME_KEY, theme);
+    els.themeToggle.querySelector(".theme-label").textContent =
+      theme === "dark" ? "Dark" : "Light";
+  }
+
+  function toggleTheme() {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    applyTheme(next);
+  }
+
+  function toggleWeb() {
+    state.web = !state.web;
+    els.webToggle.classList.toggle("active", state.web);
+    els.webToggle.title = state.web
+      ? "Web search is on for the next message"
+      : "Let the tutor search the web";
+  }
+
   // --- wiring ---
 
   els.addClass.addEventListener("click", addClass);
@@ -324,6 +350,8 @@
   els.sendBtn.addEventListener("click", send);
   els.attachBtn.addEventListener("click", () => els.fileInput.click());
   els.fileInput.addEventListener("change", (e) => onFilesChosen([...e.target.files]));
+  els.themeToggle.addEventListener("click", toggleTheme);
+  els.webToggle.addEventListener("click", toggleWeb);
 
   els.input.addEventListener("input", autoGrow);
   els.input.addEventListener("keydown", (e) => {
@@ -347,6 +375,7 @@
   // --- boot ---
 
   async function boot() {
+    applyTheme(localStorage.getItem(THEME_KEY) || "dark");
     try {
       const status = await API.status();
       if (!status.hasApiKey) els.keyWarning.hidden = false;
