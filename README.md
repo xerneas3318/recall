@@ -63,10 +63,15 @@ Recall is one small Express app with a plain browser front end:
 - **Builds targeted practice.** Ask for a worksheet and it writes one aimed at your
   recorded weak spots, answer key included. Paste a worksheet and it will work
   through it with you.
+- **Searches the web when you want it to.** Flip the **Web** switch in the composer
+  and the tutor can look things up and open pages for current information or a
+  source, then shows what it looked up under its reply. It stays off otherwise.
 - **Keeps everything.** Close the app, come back tomorrow, and your classes, chats,
   uploads, and memory are all still there.
 
-The reply streams in token by token, the same as the web app.
+The reply streams in token by token, the same as the web app. The interface takes
+after Obsidian: a quiet, mostly monochrome look with sharp edges, and a light/dark
+toggle in the sidebar.
 
 ## Architecture
 
