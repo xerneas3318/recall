@@ -59,6 +59,13 @@ db.exec(`
     content    TEXT NOT NULL,
     created_at TEXT NOT NULL
   );
+
+  -- Simple key/value store: the shared "broad context" profile lives here, plus
+  -- a one-time seed flag.
+  CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
 `);
 
 function now() {

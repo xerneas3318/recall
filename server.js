@@ -9,6 +9,10 @@ require("dotenv").config();
 const express = require("express");
 const path = require("node:path");
 const { PORT, hasApiKey, CHAT_MODEL } = require("./src/config");
+const { seed } = require("./src/settings");
+
+// First run: create the course classes and the default broad-context profile.
+seed();
 
 const app = express();
 app.use(express.json({ limit: "2mb" }));
@@ -20,6 +24,7 @@ app.get("/api/status", (req, res) => {
 
 app.use("/api/classes", require("./src/routes/classes"));
 app.use("/api/memory", require("./src/routes/memory"));
+app.use("/api/profile", require("./src/routes/settings"));
 app.use("/api", require("./src/routes/files"));
 app.use("/api", require("./src/routes/chats"));
 
