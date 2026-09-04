@@ -14,7 +14,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || "MISSING
 
 // The persona plus the class's accumulated memory of weak spots. This is what
 // makes the tutor feel like it actually remembers you between sessions.
-function systemPrompt(className, memories, web) {
+function systemPrompt(className, memories, web, profile) {
   const lines = [
     `You are a sharp, patient study tutor helping the student with their ${className} coursework.`,
     "When they paste homework, a worksheet, or a photo of their work, check it carefully, point out exactly what is wrong and why, and show the correct reasoning step by step.",
@@ -23,6 +23,10 @@ function systemPrompt(className, memories, web) {
     "Use Markdown. Be concrete and show your work.",
     "Write all math as plain text, not LaTeX: no dollar signs, no \\frac, no \\cdot. Use ^ for exponents (x^2), * or plain juxtaposition for multiplication, and / for division.",
   ];
+
+  if (profile && profile.trim()) {
+    lines.push("", "Background on the student (applies across all their classes):", profile.trim());
+  }
 
   if (web) {
     lines.push(
@@ -69,11 +73,11 @@ function toApiMessage(message, attachments) {
 
 // Stream a reply. onText fires for every chunk. Resolves to the full text plus
 // a list of any web searches/fetches the model ran, so the UI can show sources.
-async function streamReply({ className, memories, messages, web, onText }) {
+async function streamReply({ className, memories, messages, web, profile, onText }) {
   const params = {
     model: CHAT_MODEL,
     max_tokens: web ? 8000 : 4096,
-    system: systemPrompt(className, memories, web),
+    system: systemPrompt(className, memories, web, profile),
     messages,
   };
   if (web) {

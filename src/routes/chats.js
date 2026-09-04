@@ -6,6 +6,7 @@ const express = require("express");
 const { db, now } = require("../db");
 const { toApiMessage, streamReply } = require("../anthropic");
 const { listMemories, extractAndStore } = require("../memory");
+const { getProfile } = require("../settings");
 
 const router = express.Router();
 
@@ -132,6 +133,7 @@ router.post("/chats/:chatId/messages", async (req, res) => {
       memories,
       messages: apiMessages,
       web,
+      profile: getProfile(),
       onText: (delta) => {
         if (!res.writableEnded) sse(res, "delta", { text: delta });
       },
