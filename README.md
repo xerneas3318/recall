@@ -52,8 +52,12 @@ Recall is built around the opposite trade-off:
 
 Recall is one small Express app with a plain browser front end:
 
-- **Sections per class.** Make a class for each subject. Its chats and its struggle
-  memory are scoped to it.
+- **Sections per class.** A class for each subject, with its own chats and its own
+  struggle memory. It starts pre-loaded with the current term's courses; add or
+  delete classes however you like.
+- **Knows your whole course load.** A shared "broad context" rides along with every
+  chat: who you are, your full schedule, and the level to teach at. So any class's
+  tutor can connect ideas across your courses. Edit it any time from the sidebar.
 - **Grade your homework.** Paste a worksheet or attach an image or PDF and ask what
   you got wrong. The tutor checks it, points out the specific mistakes, and works
   through the correct reasoning.
@@ -105,7 +109,7 @@ cp .env.example .env
 npm start
 ```
 
-Then open http://localhost:5173, make a class, and paste some homework.
+Then open http://localhost:5173, pick one of your classes, and paste some homework.
 
 Get an API key at https://console.anthropic.com/. Your key lives only in `.env`,
 which is gitignored and never leaves your machine.
