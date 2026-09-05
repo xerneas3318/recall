@@ -1,154 +1,57 @@
 # Recall
 
-[![Node 20+](https://img.shields.io/badge/Node-20%2B-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Express](https://img.shields.io/badge/Server-Express%205-000000?style=flat-square&logo=express)](https://expressjs.com/)
-[![SQLite](https://img.shields.io/badge/Storage-node%3Asqlite-003B57?style=flat-square&logo=sqlite&logoColor=white)](https://nodejs.org/api/sqlite.html)
-[![Claude](https://img.shields.io/badge/Model-Claude%20Opus-CC785C?style=flat-square)](https://www.anthropic.com/)
-[![Local-first](https://img.shields.io/badge/Runs-100%25%20localhost-2e7d32?style=flat-square)](#why-recall)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+I kept getting homework wrong and asking an AI to explain it, and the annoying part was that every question lived in its own separate chat. I'd work out that I keep messing up, say, integration by parts, and then a week later in a brand new chat I'd make the exact same mistake and have to re-explain all my context from scratch. Nothing carried over. My mistakes didn't stick, and neither did the help.
 
-**A local study companion that remembers what you keep getting wrong.** Paste your
-homework, drop in a photo or PDF, and ask what you missed. Recall grades it,
-explains the idea, and quietly keeps a per-class memory of your weak spots so every
-later answer and every practice worksheet is aimed at the things you actually
-struggle with.
+So I made Recall. It's a chat tool for homework that keeps a memory of what I keep getting wrong, per class, and reuses it. I paste in homework and ask what I messed up, it grades it, and quietly writes down the thing I fumbled. Next time, in any chat for that class, it already knows. When I ask for practice it points at those weak spots instead of random problems.
 
-It is basically Claude on the web, but wired for coursework: sections for each
-class, files that stick around, and a memory that survives closing the app. Nothing
-leaves your machine except the calls to the model.
+The way I think about it: global memory, but aimed specifically at asking homework questions. It remembers what I'm struggling with and then actually helps me on it.
 
-## Contents
-
-- [Why Recall](#why-recall)
-- [What it does](#what-it-does)
-- [Architecture](#architecture)
-- [Getting started](#getting-started)
-- [Configuration](#configuration)
-- [Repository layout](#repository-layout)
-- [Status](#status)
-- [License](#license)
-
-## Why Recall
-
-A normal chat window forgets you the moment you close the tab. For studying that is
-the wrong shape:
-
-- The whole point is to notice the mistakes you make *over and over* and drill them.
-- Homework comes as photos and PDFs, and you want to come back to them later.
-- Different classes need different context, not one giant undifferentiated thread.
-
-Recall is built around the opposite trade-off:
-
-- **Persistent memory.** Every exchange is mined for the concepts you fumble, and
-  those notes are carried into every future chat in that class.
-- **Localhost-able.** The entire thing runs on your own machine at
-  `http://localhost:5173`, backed by a single SQLite file and an uploads folder.
-- **Continues after you close it.** Chats, files, and memory all live on disk, so
-  reopening the app drops you right back where you were.
-- **Organized by class.** Each subject is its own section with its own chats and its
-  own memory.
+I've been using it for a couple of my classes so far and it's honestly just nice to not forget my own mistakes.
 
 ## What it does
 
-Recall is one small Express app with a plain browser front end:
+- Keeps a separate class for each subject, so my chem mistakes don't get tangled up with the CS ones. It comes preloaded with my current courses.
+- I paste homework, or drop in a photo or a PDF, and ask what I got wrong. It walks through the actual errors instead of just handing over the answer.
+- After each exchange it saves whatever I looked shaky on to that class's memory. The list shows on the right and I can edit or delete anything.
+- If I ask for a worksheet it builds one around my weak spots, with an answer key.
+- There's a broad-context note that goes out with every class (who I am, my whole course load, the level to explain things at) so any class's tutor has the bigger picture. I can edit it from the sidebar.
+- Flip on the Web switch and it can look things up when it needs to.
+- Everything is saved to disk, so I can close it and come back and my chats and memory are still there.
 
-- **Sections per class.** A class for each subject, with its own chats and its own
-  struggle memory. It starts pre-loaded with the current term's courses; add or
-  delete classes however you like.
-- **Knows your whole course load.** A shared "broad context" rides along with every
-  chat: who you are, your full schedule, and the level to teach at. So any class's
-  tutor can connect ideas across your courses. Edit it any time from the sidebar.
-- **Grade your homework.** Paste a worksheet or attach an image or PDF and ask what
-  you got wrong. The tutor checks it, points out the specific mistakes, and works
-  through the correct reasoning.
-- **Remembers your weak spots.** After each exchange a small model notes what you
-  seem shaky on and saves it to that class's memory. The list shows on the right and
-  you can prune or add to it by hand.
-- **Builds targeted practice.** Ask for a worksheet and it writes one aimed at your
-  recorded weak spots, answer key included. Paste a worksheet and it will work
-  through it with you.
-- **Searches the web when you want it to.** Flip the **Web** switch in the composer
-  and the tutor can look things up and open pages for current information or a
-  source, then shows what it looked up under its reply. It stays off otherwise.
-- **Keeps everything.** Close the app, come back tomorrow, and your classes, chats,
-  uploads, and memory are all still there.
+It all runs locally. The only thing that leaves my machine is the actual call to the model.
 
-The reply streams in token by token, the same as the web app. The interface takes
-after Obsidian: a quiet, mostly monochrome look with sharp edges, and a light/dark
-toggle in the sidebar.
+## Running it
 
-## Architecture
-
-```
-   Browser (vanilla JS, SSE) ──► Express (localhost:5173)
-                                     │
-                                     ├──► node:sqlite   (classes, chats, messages, memory)
-                                     ├──► uploads/       (images + pdfs on disk)
-                                     └──► Claude API     (@anthropic-ai/sdk)
-                                             │
-                                             ├── chat model:   streams the tutor's reply
-                                             └── memory model: extracts your weak spots
-```
-
-Each chat request rebuilds the conversation, injects the class's struggle memory into
-the system prompt, streams the answer back over Server-Sent Events, and then makes a
-second, cheaper call to update that memory from what just happened.
-
-## Getting started
-
-You need Node 20 or newer (for the built-in `node:sqlite`) and an Anthropic API key.
+You need Node 20 or newer and an Anthropic API key.
 
 ```bash
 git clone https://github.com/xerneas3318/recall.git
 cd recall
 npm install
-
-cp .env.example .env
-# open .env and paste your ANTHROPIC_API_KEY
-
+cp .env.example .env     # put your ANTHROPIC_API_KEY in here
 npm start
 ```
 
-Then open http://localhost:5173, pick one of your classes, and paste some homework.
+Then open http://localhost:5173. Your key only lives in `.env`, which is gitignored, so it never leaves your machine.
 
-Get an API key at https://console.anthropic.com/. Your key lives only in `.env`,
-which is gitignored and never leaves your machine.
+It's plain Node and Express with a vanilla JS front end, SQLite for storage (the built-in `node:sqlite`), and the Anthropic SDK for the model.
 
-## Configuration
+## Config
 
-All configuration is environment variables (see `.env.example`):
+Everything is set through environment variables in `.env`:
 
-| Variable | Default | Purpose |
+| Variable | Default | What it does |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | (required) | Your Anthropic API key |
-| `PORT` | `5173` | Port the app listens on |
-| `RECALL_CHAT_MODEL` | `claude-opus-4-8` | Model that answers in chat |
-| `RECALL_MEMORY_MODEL` | `claude-haiku-4-5` | Cheaper model that records weak spots |
+| `ANTHROPIC_API_KEY` | (required) | your Anthropic API key |
+| `PORT` | `5173` | port it runs on |
+| `RECALL_CHAT_MODEL` | `claude-opus-4-8` | the model that answers |
+| `RECALL_MEMORY_MODEL` | `claude-haiku-4-5` | the cheaper model that records weak spots |
 
-## Repository layout
+If you want to spend less, switch `RECALL_CHAT_MODEL` to `claude-sonnet-5`. It handles homework help really well for a lot less.
 
-```
-server.js            app entry: wires routes, serves the front end
-src/
-  config.js          env-driven settings
-  db.js              node:sqlite schema and connection
-  anthropic.js       building context and streaming the reply
-  memory.js          extracting and storing struggle notes
-  routes/            one file per group: classes, chats, files, memory
-public/
-  index.html         the interface
-  css/styles.css     styling
-  js/                api client, markdown rendering, and the UI controller
-data/                the SQLite file (gitignored)
-uploads/             stored images and pdfs (gitignored)
-```
+## Where it's at
 
-## Status
-
-Working and useful day to day. It is a personal tool, so it runs single-user with no
-auth and assumes you trust whatever is on your own machine. Rough edges and ideas for
-later: adjustable models per class, exporting a class's memory, and search across old
-chats.
+It's a personal project. Single user, no login, and it assumes you trust whatever is on your own machine. It works well enough that I actually use it. Things I might add later: picking a different model per class, exporting a class's memory, and searching back through old chats.
 
 ## License
 
