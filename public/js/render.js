@@ -14,7 +14,21 @@ function inline(s) {
 }
 
 const isSpecial = (l) =>
-  /^```/.test(l) || /^#{1,3}\s+/.test(l) || /^\s*[-*]\s+/.test(l) || /^\s*\d+\.\s+/.test(l);
+  /^```/.test(l) ||
+  /^#{1,3}\s+/.test(l) ||
+  /^\s*[-*]\s+/.test(l) ||
+  /^\s*\d+\.\s+/.test(l) ||
+  /^\s*\|.*\|\s*$/.test(l);
+
+// Split "| a | b |" into ["a", "b"].
+function splitRow(line) {
+  return line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((c) => c.trim());
+}
 
 // A deliberately small Markdown-to-HTML pass. Handles the things Claude
 // actually uses in tutoring: headings, lists, fenced code, and emphasis.
@@ -32,6 +46,25 @@ function renderMarkdown(src) {
       while (i < lines.length && !/^```/.test(lines[i])) code.push(lines[i++]);
       i++; // closing fence
       html += `<pre><code>${code.join("\n")}</code></pre>`;
+      continue;
+    }
+
+    // GitHub-style table: a header row, a |---|---| separator, then body rows.
+    if (
+      /^\s*\|.*\|\s*$/.test(line) &&
+      i + 1 < lines.length &&
+      /^\s*\|?[\s:|-]+\|?\s*$/.test(lines[i + 1]) &&
+      lines[i + 1].includes("-")
+    ) {
+      const header = splitRow(line);
+      i += 2; // skip the header and the separator
+      const rows = [];
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) rows.push(splitRow(lines[i++]));
+      const head = header.map((h) => `<th>${inline(h)}</th>`).join("");
+      const body = rows
+        .map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`)
+        .join("");
+      html += `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
       continue;
     }
 
