@@ -43,6 +43,9 @@ const API = {
   addMemory: (classId, content) => json("POST", `/api/classes/${classId}/memory`, { content }),
   deleteMemory: (id) => json("DELETE", `/api/memory/${id}`),
 
+  getProfile: () => json("GET", "/api/profile"),
+  updateProfile: (profile) => json("PUT", "/api/profile", { profile }),
+
   async uploadFiles(files) {
     const fd = new FormData();
     for (const f of files) fd.append("files", f);

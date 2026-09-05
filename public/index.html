@@ -35,6 +35,7 @@
       </section>
 
       <div class="sidebar-foot">
+        <button id="context-btn" class="foot-btn" title="Edit the shared context sent with every class">Broad context</button>
         <button id="theme-toggle" class="foot-btn" title="Toggle theme">
           <span class="theme-label">Dark</span>
         </button>
@@ -78,6 +79,18 @@
         <input id="memory-input" type="text" placeholder="Add a weak spot..." disabled />
       </div>
     </aside>
+  </div>
+
+  <div id="context-modal" class="modal" hidden>
+    <div class="modal-card">
+      <h3>Broad context</h3>
+      <p class="modal-hint">Shared background sent with every class: who you are, your course load, and the level to teach at. Edit it however you like.</p>
+      <textarea id="context-text" rows="14"></textarea>
+      <div class="modal-actions">
+        <button id="context-cancel" class="tool-btn">Cancel</button>
+        <button id="context-save" class="send-btn">Save</button>
+      </div>
+    </div>
   </div>
 
   <script src="js/api.js"></script>

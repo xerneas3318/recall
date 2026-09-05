@@ -24,6 +24,11 @@
     keyWarning: el("key-warning"),
     themeToggle: el("theme-toggle"),
     webToggle: el("web-toggle"),
+    contextBtn: el("context-btn"),
+    contextModal: el("context-modal"),
+    contextText: el("context-text"),
+    contextSave: el("context-save"),
+    contextCancel: el("context-cancel"),
   };
 
   const state = {
@@ -343,6 +348,18 @@
       : "Let the tutor search the web";
   }
 
+  async function openContext() {
+    const { profile } = await API.getProfile();
+    els.contextText.value = profile || "";
+    els.contextModal.hidden = false;
+    els.contextText.focus();
+  }
+
+  async function saveContext() {
+    await API.updateProfile(els.contextText.value);
+    els.contextModal.hidden = true;
+  }
+
   // --- wiring ---
 
   els.addClass.addEventListener("click", addClass);
@@ -352,6 +369,12 @@
   els.fileInput.addEventListener("change", (e) => onFilesChosen([...e.target.files]));
   els.themeToggle.addEventListener("click", toggleTheme);
   els.webToggle.addEventListener("click", toggleWeb);
+  els.contextBtn.addEventListener("click", openContext);
+  els.contextSave.addEventListener("click", saveContext);
+  els.contextCancel.addEventListener("click", () => (els.contextModal.hidden = true));
+  els.contextModal.addEventListener("click", (e) => {
+    if (e.target === els.contextModal) els.contextModal.hidden = true;
+  });
 
   els.input.addEventListener("input", autoGrow);
   els.input.addEventListener("keydown", (e) => {
