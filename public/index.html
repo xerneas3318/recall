@@ -12,26 +12,25 @@
   </div>
 
   <div class="app">
-    <!-- Classes and chats -->
+    <!-- Classes, search, and time-grouped chats -->
     <aside class="sidebar">
-      <div class="brand">
-        <span class="brand-mark">◆</span> recall
-      </div>
+      <div class="brand"><span class="brand-mark">◆</span> recall</div>
 
       <section class="pane">
         <div class="pane-head">
           <h2>Classes</h2>
           <button id="add-class" class="icon-btn" title="New class">+</button>
         </div>
-        <ul id="class-list" class="list"></ul>
+        <ul id="class-list" class="list class-list"></ul>
       </section>
 
+      <div class="side-divider"></div>
+
+      <input id="search" class="search" type="text" placeholder="Search chats..." disabled />
+      <button id="add-chat" class="new-chat-btn" disabled>New chat</button>
+
       <section class="pane grow">
-        <div class="pane-head">
-          <h2 id="chats-title">Chats</h2>
-          <button id="add-chat" class="icon-btn" title="New chat" disabled>+</button>
-        </div>
-        <ul id="chat-list" class="list"></ul>
+        <div id="chat-list" class="chat-groups"></div>
       </section>
 
       <div class="sidebar-foot">
@@ -44,6 +43,11 @@
 
     <!-- Conversation -->
     <main class="chat">
+      <div id="chat-topbar" class="chat-topbar" hidden>
+        <div class="topbar-title" id="topbar-title">New chat</div>
+        <div class="topbar-sub" id="topbar-sub"></div>
+      </div>
+
       <div id="messages" class="messages">
         <div class="empty" id="empty-state">
           <h1>Pick a class to start</h1>
@@ -58,11 +62,13 @@
           <button data-prompt="Explain the ideas I keep missing in this class, from the ground up.">Explain what I keep missing</button>
         </div>
         <div id="attachment-chips" class="chips"></div>
-        <div class="composer-row">
-          <button id="attach-btn" class="tool-btn" title="Attach image or PDF">Attach</button>
-          <button id="web-toggle" class="tool-btn" title="Let the tutor search the web">Web</button>
+        <div class="composer-box">
           <textarea id="input" rows="1" placeholder="Ask a question, or paste a worksheet..."></textarea>
-          <button id="send-btn" class="send-btn">Send</button>
+          <div class="composer-controls">
+            <button id="attach-btn" class="tool-btn" title="Attach image or PDF">Attach</button>
+            <button id="web-toggle" class="tool-btn" title="Let the tutor search the web">Web</button>
+            <button id="send-btn" class="send-btn">Send</button>
+          </div>
         </div>
         <input id="file-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" multiple hidden />
       </div>

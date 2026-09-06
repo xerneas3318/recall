@@ -7,9 +7,12 @@
   const els = {
     classList: el("class-list"),
     chatList: el("chat-list"),
-    chatsTitle: el("chats-title"),
+    search: el("search"),
     addClass: el("add-class"),
     addChat: el("add-chat"),
+    chatTopbar: el("chat-topbar"),
+    topbarTitle: el("topbar-title"),
+    topbarSub: el("topbar-sub"),
     messages: el("messages"),
     emptyState: el("empty-state"),
     composer: el("composer"),
@@ -33,7 +36,12 @@
 
   const state = {
     classId: null,
+    className: "",
+    classes: [],
     chatId: null,
+    chats: [], // chats in the current class, newest first
+    search: "",
+    model: "",
     staged: [], // uploaded-but-unsent attachments
     sending: false,
     web: false, // whether the tutor may search the web
@@ -46,6 +54,7 @@
 
   async function loadClasses(selectId) {
     const classes = await API.listClasses();
+    state.classes = classes;
     els.classList.innerHTML = "";
     for (const c of classes) {
       const li = document.createElement("li");
@@ -86,12 +95,17 @@
 
   async function selectClass(id) {
     state.classId = id;
+    state.className = (state.classes.find((c) => c.id === id) || {}).name || "";
     localStorage.setItem(LAST_CLASS, id);
     highlight(els.classList, id);
 
     els.addChat.disabled = false;
     els.memoryInput.disabled = false;
+    els.search.disabled = false;
+    els.search.value = "";
+    state.search = "";
     els.composer.hidden = false;
+    els.chatTopbar.hidden = false;
 
     await Promise.all([loadChats(), loadMemory()]);
 
@@ -105,19 +119,76 @@
   // --- chats ---
 
   async function loadChats() {
-    const chats = await API.listChats(state.classId);
+    state.chats = await API.listChats(state.classId);
+    renderChats();
+  }
+
+  // Which time bucket a chat falls in, Open WebUI style.
+  function bucketFor(iso) {
+    const d = new Date(iso).getTime();
+    const nowD = new Date();
+    const startToday = new Date(nowD.getFullYear(), nowD.getMonth(), nowD.getDate()).getTime();
+    const day = 86400000;
+    if (d >= startToday) return { key: "today", label: "Today" };
+    if (d >= startToday - day) return { key: "yesterday", label: "Yesterday" };
+    if (d >= startToday - 7 * day) return { key: "w", label: "Previous 7 Days" };
+    if (d >= startToday - 30 * day) return { key: "m", label: "Previous 30 Days" };
+    const dt = new Date(iso);
+    return {
+      key: `${dt.getFullYear()}-${dt.getMonth()}`,
+      label: dt.toLocaleString("default", { month: "long", year: "numeric" }),
+    };
+  }
+
+  function chatItem(c) {
+    const li = document.createElement("li");
+    li.dataset.id = c.id;
+    li.innerHTML = `<span class="label"></span><button class="del" title="Delete chat">×</button>`;
+    li.querySelector(".label").textContent = c.title;
+    li.addEventListener("click", (e) => {
+      if (e.target.classList.contains("del")) return;
+      selectChat(c.id);
+    });
+    li.querySelector(".del").addEventListener("click", () => removeChat(c.id));
+    return li;
+  }
+
+  function renderChats() {
     els.chatList.innerHTML = "";
+    const q = state.search.trim().toLowerCase();
+    const chats = q
+      ? state.chats.filter((c) => c.title.toLowerCase().includes(q))
+      : state.chats;
+
+    if (!chats.length) {
+      if (q) els.chatList.innerHTML = `<div class="group-empty">No chats match.</div>`;
+      return;
+    }
+
+    // chats arrive newest-first, so buckets come out in order.
+    const groups = [];
+    const byKey = {};
     for (const c of chats) {
-      const li = document.createElement("li");
-      li.dataset.id = c.id;
-      li.innerHTML = `<span class="label"></span><button class="del" title="Delete chat">×</button>`;
-      li.querySelector(".label").textContent = c.title;
-      li.addEventListener("click", (e) => {
-        if (e.target.classList.contains("del")) return;
-        selectChat(c.id);
-      });
-      li.querySelector(".del").addEventListener("click", () => removeChat(c.id));
-      els.chatList.appendChild(li);
+      const b = bucketFor(c.updated_at);
+      if (!byKey[b.key]) {
+        byKey[b.key] = { label: b.label, items: [] };
+        groups.push(byKey[b.key]);
+      }
+      byKey[b.key].items.push(c);
+    }
+
+    for (const g of groups) {
+      const wrap = document.createElement("div");
+      wrap.className = "chat-group";
+      const head = document.createElement("div");
+      head.className = "group-head";
+      head.textContent = g.label;
+      wrap.appendChild(head);
+      const ul = document.createElement("ul");
+      ul.className = "list";
+      for (const c of g.items) ul.appendChild(chatItem(c));
+      wrap.appendChild(ul);
+      els.chatList.appendChild(wrap);
     }
     if (state.chatId) highlight(els.chatList, state.chatId);
   }
@@ -145,24 +216,37 @@
     highlight(els.chatList, id);
 
     const chat = await API.getChat(id);
+    setTopbar(chat.title);
     els.messages.innerHTML = "";
     for (const m of chat.messages) els.messages.appendChild(Render.messageEl(m));
     scrollDown();
     els.input.focus();
   }
 
+  function setTopbar(title) {
+    els.topbarTitle.textContent = title;
+    els.topbarSub.textContent = state.model
+      ? `${state.className}  ·  ${state.model}`
+      : state.className;
+  }
+
   function showBlankChat() {
     state.chatId = null;
     localStorage.removeItem(LAST_CHAT);
     highlight(els.chatList, null);
+    setTopbar("New chat");
     els.messages.innerHTML =
       `<div class="empty"><h1>New chat</h1><p>Paste your homework or ask a question. A chat is created the moment you send.</p></div>`;
   }
 
   function resetToEmpty() {
     els.composer.hidden = true;
+    els.chatTopbar.hidden = true;
     els.addChat.disabled = true;
     els.memoryInput.disabled = true;
+    els.search.disabled = true;
+    els.search.value = "";
+    state.search = "";
     els.chatList.innerHTML = "";
     els.memoryList.innerHTML = "";
     els.messages.innerHTML =
@@ -291,6 +375,7 @@
         onDone: (data) => {
           bubble.classList.remove("streaming");
           Render.renderSources(bubble, data && data.searches);
+          if (data && data.title) setTopbar(data.title);
           loadChats(); // the first message may have renamed the chat
         },
         onMemory: (data) => {
@@ -311,8 +396,9 @@
 
   // --- helpers ---
 
-  function highlight(listEl, id) {
-    for (const li of listEl.children) {
+  // Works for the flat class list and the grouped chat list alike.
+  function highlight(root, id) {
+    for (const li of root.querySelectorAll("li[data-id]")) {
       li.classList.toggle("active", Number(li.dataset.id) === Number(id));
     }
   }
@@ -367,6 +453,10 @@
   els.sendBtn.addEventListener("click", send);
   els.attachBtn.addEventListener("click", () => els.fileInput.click());
   els.fileInput.addEventListener("change", (e) => onFilesChosen([...e.target.files]));
+  els.search.addEventListener("input", () => {
+    state.search = els.search.value;
+    renderChats();
+  });
   els.themeToggle.addEventListener("click", toggleTheme);
   els.webToggle.addEventListener("click", toggleWeb);
   els.contextBtn.addEventListener("click", openContext);
@@ -401,6 +491,7 @@
     applyTheme(localStorage.getItem(THEME_KEY) || "dark");
     try {
       const status = await API.status();
+      state.model = status.chatModel || "";
       if (!status.hasApiKey) els.keyWarning.hidden = false;
     } catch {
       /* status is best-effort */
