@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=3" />
+  <link rel="stylesheet" href="css/styles.css?v=4" />
 </head>
 <body>
   <div id="key-warning" class="key-warning" hidden>
@@ -19,6 +19,11 @@
     <aside class="sidebar">
       <div class="brand"><span class="brand-mark">◆</span> recall</div>
 
+      <button id="search" class="search-launcher" title="Search (Cmd+P)">
+        <span class="sl-text">Search</span>
+        <kbd>⌘P</kbd>
+      </button>
+
       <section class="pane">
         <div class="pane-head">
           <h2>Classes</h2>
@@ -29,7 +34,6 @@
 
       <div class="side-divider"></div>
 
-      <input id="search" class="search" type="text" placeholder="Search chats..." disabled />
       <button id="add-chat" class="new-chat-btn" disabled>New chat</button>
 
       <section class="pane grow">
@@ -93,6 +97,14 @@
     </aside>
   </div>
 
+  <div id="palette" class="palette" hidden>
+    <div class="palette-card">
+      <input id="palette-input" class="palette-input" type="text" autocomplete="off"
+             placeholder="Jump to a class or chat, or run a command..." />
+      <ul id="palette-results" class="palette-results"></ul>
+    </div>
+  </div>
+
   <div id="context-modal" class="modal" hidden>
     <div class="modal-card">
       <h3>Broad context</h3>
@@ -105,8 +117,8 @@
     </div>
   </div>
 
-  <script src="js/api.js?v=3"></script>
-  <script src="js/render.js?v=3"></script>
-  <script src="js/app.js?v=3"></script>
+  <script src="js/api.js?v=4"></script>
+  <script src="js/render.js?v=4"></script>
+  <script src="js/app.js?v=4"></script>
 </body>
 </html>

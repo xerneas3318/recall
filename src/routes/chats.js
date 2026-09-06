@@ -17,6 +17,10 @@ const chatOwnerStmt = db.prepare(
 const listChatsStmt = db.prepare(
   "SELECT id, title, updated_at FROM chats WHERE class_id = ? ORDER BY updated_at DESC",
 );
+const allChatsStmt = db.prepare(
+  `SELECT c.id, c.title, c.class_id, cl.name AS class_name, c.updated_at
+   FROM chats c JOIN classes cl ON cl.id = c.class_id ORDER BY c.updated_at DESC`,
+);
 const insertChatStmt = db.prepare(
   "INSERT INTO chats (class_id, title, created_at, updated_at) VALUES (?, ?, ?, ?)",
 );
@@ -52,6 +56,11 @@ function messageForClient(row) {
   }));
   return { ...row, attachments };
 }
+
+// Every chat across all classes, for the command palette.
+router.get("/all-chats", (req, res) => {
+  res.json(allChatsStmt.all());
+});
 
 // --- chats within a class ---
 

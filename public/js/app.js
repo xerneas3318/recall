@@ -10,6 +10,9 @@
     classList: el("class-list"),
     chatList: el("chat-list"),
     search: el("search"),
+    palette: el("palette"),
+    paletteInput: el("palette-input"),
+    paletteResults: el("palette-results"),
     addClass: el("add-class"),
     addChat: el("add-chat"),
     chatTopbar: el("chat-topbar"),
@@ -42,7 +45,6 @@
     classes: [],
     chatId: null,
     chats: [], // chats in the current class, newest first
-    search: "",
     model: "",
     staged: [], // uploaded-but-unsent attachments
     sending: false,
@@ -103,9 +105,6 @@
 
     els.addChat.disabled = false;
     els.memoryInput.disabled = false;
-    els.search.disabled = false;
-    els.search.value = "";
-    state.search = "";
     els.composer.hidden = false;
     els.chatTopbar.hidden = false;
 
@@ -157,15 +156,8 @@
 
   function renderChats() {
     els.chatList.innerHTML = "";
-    const q = state.search.trim().toLowerCase();
-    const chats = q
-      ? state.chats.filter((c) => c.title.toLowerCase().includes(q))
-      : state.chats;
-
-    if (!chats.length) {
-      if (q) els.chatList.innerHTML = `<div class="group-empty">No chats match.</div>`;
-      return;
-    }
+    const chats = state.chats;
+    if (!chats.length) return;
 
     // chats arrive newest-first, so buckets come out in order.
     const groups = [];
@@ -246,9 +238,6 @@
     els.chatTopbar.hidden = true;
     els.addChat.disabled = true;
     els.memoryInput.disabled = true;
-    els.search.disabled = true;
-    els.search.value = "";
-    state.search = "";
     els.chatList.innerHTML = "";
     els.memoryList.innerHTML = "";
     els.messages.innerHTML =
@@ -448,6 +437,114 @@
     applyMemoryPanel(!els.app.classList.contains("memory-open"));
   }
 
+  // --- command palette (Cmd+P) ---
+
+  let paletteItems = [];
+  let paletteFiltered = [];
+  let paletteSel = 0;
+
+  function buildPaletteItems(allChats) {
+    const items = [
+      { kind: "Command", label: "New chat", run: () => state.classId && newChat() },
+      { kind: "Command", label: "Toggle web search", run: toggleWeb },
+      { kind: "Command", label: "Toggle theme", run: toggleTheme },
+      { kind: "Command", label: "Toggle weak-spots panel", run: toggleMemoryPanel },
+      { kind: "Command", label: "Edit broad context", run: openContext },
+    ];
+    for (const c of state.classes) {
+      items.push({ kind: "Class", label: c.name, run: () => selectClass(c.id) });
+    }
+    for (const ch of allChats) {
+      items.push({
+        kind: "Chat",
+        label: ch.title,
+        sub: ch.class_name,
+        run: () => openChatFromPalette(ch.class_id, ch.id),
+      });
+    }
+    return items;
+  }
+
+  async function openPalette() {
+    let allChats = [];
+    try {
+      allChats = await API.allChats();
+    } catch {
+      /* palette still works with classes and commands */
+    }
+    paletteItems = buildPaletteItems(allChats);
+    els.palette.hidden = false;
+    els.paletteInput.value = "";
+    renderPalette("");
+    els.paletteInput.focus();
+  }
+
+  function closePalette() {
+    els.palette.hidden = true;
+  }
+
+  function renderPalette(query) {
+    const q = query.trim().toLowerCase();
+    paletteFiltered = q
+      ? paletteItems.filter((it) => `${it.label} ${it.sub || ""}`.toLowerCase().includes(q))
+      : paletteItems;
+    paletteSel = 0;
+
+    if (!paletteFiltered.length) {
+      els.paletteResults.innerHTML = `<li class="palette-empty">No matches.</li>`;
+      return;
+    }
+
+    els.paletteResults.innerHTML = "";
+    paletteFiltered.forEach((it, i) => {
+      const li = document.createElement("li");
+      if (i === 0) li.classList.add("sel");
+      const label = document.createElement("span");
+      label.className = "pl-label";
+      label.textContent = it.label;
+      li.appendChild(label);
+      if (it.sub) {
+        const sub = document.createElement("span");
+        sub.className = "sub";
+        sub.textContent = it.sub;
+        li.appendChild(sub);
+      }
+      const kind = document.createElement("span");
+      kind.className = "kind";
+      kind.textContent = it.kind;
+      li.appendChild(kind);
+      li.addEventListener("click", () => activatePalette(i));
+      li.addEventListener("mousemove", () => setPaletteSel(i));
+      els.paletteResults.appendChild(li);
+    });
+  }
+
+  function setPaletteSel(i) {
+    if (i === paletteSel) return;
+    paletteSel = i;
+    const lis = els.paletteResults.querySelectorAll("li");
+    lis.forEach((li, n) => li.classList.toggle("sel", n === i));
+  }
+
+  function movePaletteSel(delta) {
+    if (!paletteFiltered.length) return;
+    const i = Math.max(0, Math.min(paletteSel + delta, paletteFiltered.length - 1));
+    setPaletteSel(i);
+    const cur = els.paletteResults.querySelectorAll("li")[i];
+    if (cur) cur.scrollIntoView({ block: "nearest" });
+  }
+
+  function activatePalette(i) {
+    const it = paletteFiltered[typeof i === "number" ? i : paletteSel];
+    closePalette();
+    if (it) it.run();
+  }
+
+  async function openChatFromPalette(classId, chatId) {
+    await selectClass(classId);
+    await selectChat(chatId);
+  }
+
   async function openContext() {
     const { profile } = await API.getProfile();
     els.contextText.value = profile || "";
@@ -467,10 +564,26 @@
   els.sendBtn.addEventListener("click", send);
   els.attachBtn.addEventListener("click", () => els.fileInput.click());
   els.fileInput.addEventListener("change", (e) => onFilesChosen([...e.target.files]));
-  els.search.addEventListener("input", () => {
-    state.search = els.search.value;
-    renderChats();
+  els.search.addEventListener("click", openPalette);
+  els.paletteInput.addEventListener("input", () => renderPalette(els.paletteInput.value));
+  els.paletteInput.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); movePaletteSel(1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); movePaletteSel(-1); }
+    else if (e.key === "Enter") { e.preventDefault(); activatePalette(); }
+    else if (e.key === "Escape") closePalette();
   });
+  els.palette.addEventListener("click", (e) => {
+    if (e.target === els.palette) closePalette();
+  });
+  document.addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && (e.key === "p" || e.key === "P")) {
+      e.preventDefault();
+      els.palette.hidden ? openPalette() : closePalette();
+    } else if (e.key === "Escape" && !els.palette.hidden) {
+      closePalette();
+    }
+  });
+
   els.themeToggle.addEventListener("click", toggleTheme);
   els.webToggle.addEventListener("click", toggleWeb);
   els.memoryToggle.addEventListener("click", toggleMemoryPanel);

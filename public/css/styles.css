@@ -180,18 +180,31 @@ button {
 
 .side-divider { height: 1px; background: var(--border); margin: 2px 4px; }
 
-.search {
+/* the search bar is a launcher for the command palette */
+.search-launcher {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
   padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--bg-elev);
-  color: var(--text);
+  color: var(--muted);
   font-size: 0.85rem;
 }
 
-.search:focus { outline: none; border-color: var(--border-strong); }
-.search:disabled { opacity: 0.4; }
+.search-launcher:hover { background: var(--bg-hover); color: var(--text); }
+.search-launcher .sl-text::before { content: "\2315  "; }
+.search-launcher kbd {
+  font: inherit;
+  font-size: 0.72rem;
+  color: var(--muted-2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 6px;
+  background: var(--bg);
+}
 
 .new-chat-btn {
   width: 100%;
@@ -616,6 +629,73 @@ button {
 }
 
 .memory-add input:focus { outline: none; border-color: var(--border-strong); }
+
+/* --- command palette --- */
+
+.palette {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: grid;
+  place-items: start center;
+  padding-top: 12vh;
+  z-index: 60;
+}
+
+.palette[hidden] { display: none; }
+
+.palette-card {
+  width: min(560px, 92vw);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+
+.palette-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.palette-input:focus { outline: none; }
+
+.palette-results {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.palette-results li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.palette-results li.sel { background: var(--active); }
+.palette-results li .sub { color: var(--muted); font-size: 0.8rem; }
+.palette-results li .kind {
+  margin-left: auto;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-2);
+}
+
+.palette-empty { cursor: default; color: var(--muted); padding: 12px; }
 
 /* --- context modal --- */
 

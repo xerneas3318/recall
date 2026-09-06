@@ -34,6 +34,7 @@ const API = {
   deleteClass: (id) => json("DELETE", `/api/classes/${id}`),
 
   listChats: (classId) => json("GET", `/api/classes/${classId}/chats`),
+  allChats: () => json("GET", "/api/all-chats"),
   createChat: (classId) => json("POST", `/api/classes/${classId}/chats`, {}),
   getChat: (chatId) => json("GET", `/api/chats/${chatId}`),
   renameChat: (chatId, title) => json("PATCH", `/api/chats/${chatId}`, { title }),
