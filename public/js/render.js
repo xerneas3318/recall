@@ -109,53 +109,61 @@ function renderMarkdown(src) {
   return html;
 }
 
-// One message block. A muted role label sits on top, attachments render as
-// thumbnails or file links, and assistant replies get an empty sources slot.
+function thumbsEl(attachments) {
+  const thumbs = document.createElement("div");
+  thumbs.className = "thumbs";
+  for (const a of attachments) {
+    if (a.kind === "image") {
+      const img = document.createElement("img");
+      img.src = a.url;
+      img.alt = a.filename;
+      thumbs.appendChild(img);
+    } else {
+      const link = document.createElement("a");
+      link.className = "file-chip";
+      link.href = a.url;
+      link.target = "_blank";
+      link.textContent = "📄 " + a.filename;
+      thumbs.appendChild(link);
+    }
+  }
+  return thumbs;
+}
+
+// A message row. The tutor gets an avatar and full-width markdown (with a slot
+// for sources); the student's turn is a rounded bubble on the right.
 function messageEl(msg) {
   const el = document.createElement("div");
   el.className = `msg ${msg.role}`;
   if (msg.id) el.dataset.id = msg.id;
+  const hasAtt = msg.attachments && msg.attachments.length;
 
-  const role = document.createElement("div");
-  role.className = "msg-role";
-  role.textContent = msg.role === "assistant" ? "Tutor" : "You";
-  el.appendChild(role);
-
-  if (msg.attachments && msg.attachments.length) {
-    const thumbs = document.createElement("div");
-    thumbs.className = "thumbs";
-    for (const a of msg.attachments) {
-      if (a.kind === "image") {
-        const img = document.createElement("img");
-        img.src = a.url;
-        img.alt = a.filename;
-        thumbs.appendChild(img);
-      } else {
-        const link = document.createElement("a");
-        link.className = "file-chip";
-        link.href = a.url;
-        link.target = "_blank";
-        link.textContent = "📄 " + a.filename;
-        thumbs.appendChild(link);
-      }
-    }
-    el.appendChild(thumbs);
-  }
-
-  const body = document.createElement("div");
   if (msg.role === "assistant") {
+    const avatar = document.createElement("div");
+    avatar.className = "avatar";
+    avatar.textContent = "◆";
+    el.appendChild(avatar);
+
+    const col = document.createElement("div");
+    col.className = "msg-col";
+    if (hasAtt) col.appendChild(thumbsEl(msg.attachments));
+    const body = document.createElement("div");
     body.className = "md";
     body.innerHTML = renderMarkdown(msg.content || "");
-  } else {
-    body.className = "text";
-    body.textContent = msg.content || "";
-  }
-  el.appendChild(body);
-
-  if (msg.role === "assistant") {
+    col.appendChild(body);
     const sources = document.createElement("div");
     sources.className = "sources";
-    el.appendChild(sources);
+    col.appendChild(sources);
+    el.appendChild(col);
+  } else {
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    if (hasAtt) bubble.appendChild(thumbsEl(msg.attachments));
+    const body = document.createElement("div");
+    body.className = "text";
+    body.textContent = msg.content || "";
+    bubble.appendChild(body);
+    el.appendChild(bubble);
   }
   return el;
 }

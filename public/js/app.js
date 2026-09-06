@@ -5,6 +5,8 @@
   const el = (id) => document.getElementById(id);
 
   const els = {
+    app: el("app"),
+    memoryToggle: el("memory-toggle"),
     classList: el("class-list"),
     chatList: el("chat-list"),
     search: el("search"),
@@ -434,6 +436,18 @@
       : "Let the tutor search the web";
   }
 
+  const MEM_KEY = "recall.memoryOpen";
+
+  function applyMemoryPanel(open) {
+    els.app.classList.toggle("memory-open", open);
+    els.memoryToggle.classList.toggle("active", open);
+    localStorage.setItem(MEM_KEY, open ? "1" : "0");
+  }
+
+  function toggleMemoryPanel() {
+    applyMemoryPanel(!els.app.classList.contains("memory-open"));
+  }
+
   async function openContext() {
     const { profile } = await API.getProfile();
     els.contextText.value = profile || "";
@@ -459,6 +473,7 @@
   });
   els.themeToggle.addEventListener("click", toggleTheme);
   els.webToggle.addEventListener("click", toggleWeb);
+  els.memoryToggle.addEventListener("click", toggleMemoryPanel);
   els.contextBtn.addEventListener("click", openContext);
   els.contextSave.addEventListener("click", saveContext);
   els.contextCancel.addEventListener("click", () => (els.contextModal.hidden = true));
@@ -489,6 +504,7 @@
 
   async function boot() {
     applyTheme(localStorage.getItem(THEME_KEY) || "dark");
+    applyMemoryPanel(localStorage.getItem(MEM_KEY) === "1");
     try {
       const status = await API.status();
       state.model = status.chatModel || "";

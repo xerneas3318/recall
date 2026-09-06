@@ -4,14 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Recall</title>
-  <link rel="stylesheet" href="css/styles.css?v=2" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css?v=3" />
 </head>
 <body>
   <div id="key-warning" class="key-warning" hidden>
     No API key set. Add <code>ANTHROPIC_API_KEY</code> to a <code>.env</code> file and restart.
   </div>
 
-  <div class="app">
+  <div class="app" id="app">
     <!-- Classes, search, and time-grouped chats -->
     <aside class="sidebar">
       <div class="brand"><span class="brand-mark">◆</span> recall</div>
@@ -44,8 +47,11 @@
     <!-- Conversation -->
     <main class="chat">
       <div id="chat-topbar" class="chat-topbar" hidden>
-        <div class="topbar-title" id="topbar-title">New chat</div>
-        <div class="topbar-sub" id="topbar-sub"></div>
+        <div class="topbar-left">
+          <div class="topbar-title" id="topbar-title">New chat</div>
+          <div class="topbar-sub" id="topbar-sub"></div>
+        </div>
+        <button id="memory-toggle" class="topbar-btn" title="Show what you struggle with">Weak spots</button>
       </div>
 
       <div id="messages" class="messages">
@@ -67,7 +73,7 @@
           <div class="composer-controls">
             <button id="attach-btn" class="tool-btn" title="Attach image or PDF">Attach</button>
             <button id="web-toggle" class="tool-btn" title="Let the tutor search the web">Web</button>
-            <button id="send-btn" class="send-btn">Send</button>
+            <button id="send-btn" class="send-btn" title="Send" aria-label="Send">↑</button>
           </div>
         </div>
         <input id="file-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" multiple hidden />
@@ -99,8 +105,8 @@
     </div>
   </div>
 
-  <script src="js/api.js?v=2"></script>
-  <script src="js/render.js?v=2"></script>
-  <script src="js/app.js?v=2"></script>
+  <script src="js/api.js?v=3"></script>
+  <script src="js/render.js?v=3"></script>
+  <script src="js/app.js?v=3"></script>
 </body>
 </html>
