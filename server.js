@@ -28,7 +28,14 @@ app.use("/api/profile", require("./src/routes/settings"));
 app.use("/api", require("./src/routes/files"));
 app.use("/api", require("./src/routes/chats"));
 
-app.use(express.static(path.join(__dirname, "public")));
+// Serve the front end without caching, so edits always show up on reload.
+app.use(
+  express.static(path.join(__dirname, "public"), {
+    etag: false,
+    lastModified: false,
+    setHeaders: (res) => res.setHeader("Cache-Control", "no-store"),
+  }),
+);
 
 app.listen(PORT, () => {
   console.log(`Recall running at http://localhost:${PORT}`);
