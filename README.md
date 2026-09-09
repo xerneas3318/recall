@@ -1,22 +1,18 @@
 # Recall
 
-I kept getting homework wrong, asking an AI to explain it, then making the same mistake a week later in a fresh chat that knew none of my history. Nothing carried over.
+Recall is a homework chat tool with memory. Paste in a problem you got wrong; it grades it, notes the exact mistake, and keeps that note per class. In any later chat for that class it already knows your weak spots, and any worksheet it makes targets them.
 
-Recall fixes that. It's a homework chat tool with memory: I paste in what I got wrong, it grades it and quietly notes what I fumbled, per class. Next time, in any chat for that class, it already knows, and any practice it makes targets those weak spots. Global memory, aimed at homework.
-
-I use it for a couple of my classes. It's just nice to stop forgetting my own mistakes.
+Think of it as global memory aimed at homework: it remembers what you keep getting wrong and helps you fix it.
 
 ## What it does
 
-- One class per subject, preloaded with my current courses.
+- One class per subject, preloaded with the current term's courses.
 - Paste homework or a photo/PDF and ask what's wrong; it works through the errors, not just the answer.
-- Saves what I looked shaky on to that class's memory, shown on the right and editable.
+- Saves the shaky spots to that class's memory, shown on the right and editable.
 - Worksheets it generates target those weak spots, with an answer key.
-- A broad-context note (who I am, my course load, the level to teach at) goes out with every class; editable from the sidebar.
+- A broad-context note (background, course load, the level to teach at) goes out with every class; editable from the sidebar.
 - A Web toggle lets it look things up.
-- Everything is saved to disk, so I can close it and come back.
-
-Runs locally. The only thing that leaves my machine is the model call.
+- Chats and memory are saved to disk, so you can close it and come back.
 
 ## Running it
 
